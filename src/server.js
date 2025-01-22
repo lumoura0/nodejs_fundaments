@@ -1,4 +1,6 @@
 import http from "node:http"
+import { Database } from './database.js'
+import { json } from './middlewares/json.js'
 
 // Criar um usuário {name, email, senha}
 // Listagem de usuários
@@ -9,22 +11,32 @@ import http from "node:http"
 // HTTP
 // Método HTTP
 // URL
-const users = []
-const server = http.createServer((req, res) => {
+
+const database = new Database()
+
+
+const server = http.createServer(async (req, res) => {
     const { method, url } = req
 
+    await json(req, res)
+
     if (method === "GET" && url === "/users") {
+        const users = database.select('users')
+
         return res
-            .setHeader("Content-Type", "application/json")
             .end(JSON.stringify(users))
     }
 
     if (method === "POST" && url === "/users") {
-        users.push({
-            id: ,
-            name: "shiro",
-            email: "example@email.com"
-        })
+        const { name, email } = req.body
+
+        const user = {
+            id: 1,
+            name,
+            email,
+        }
+        database.insert('users', user)
+
         return res.writeHead(201).end()
     }
 
