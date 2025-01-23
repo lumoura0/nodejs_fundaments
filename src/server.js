@@ -1,43 +1,27 @@
 import http from "node:http"
-import { Database } from './database.js'
 import { json } from './middlewares/json.js'
+import { routes } from './routes.js'
 
 // Criar um usuário {name, email, senha}
 // Listagem de usuários
 // Edição de usuários
 // Remoção de usuários
 
-
-// HTTP
-// Método HTTP
-// URL
-
-const database = new Database()
-
-
 const server = http.createServer(async (req, res) => {
     const { method, url } = req
 
     await json(req, res)
 
-    if (method === "GET" && url === "/users") {
-        const users = database.select('users')
+    const route = routes.find(route => {
+        return route.method === method && route.path.test(url)
+    })
 
-        return res
-            .end(JSON.stringify(users))
-    }
+    if (route) {
+        const routeParams = req.url.match(route.path)
 
-    if (method === "POST" && url === "/users") {
-        const { name, email } = req.body
+        req.params = { ...routeParams.groups }
 
-        const user = {
-            id: 1,
-            name,
-            email,
-        }
-        database.insert('users', user)
-
-        return res.writeHead(201).end()
+        return route.handler(req, res)
     }
 
     return res.end("hello world")
